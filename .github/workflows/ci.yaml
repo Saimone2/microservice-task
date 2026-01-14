@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: debian-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Build docker img
+      run: docker build -t localhost:32000/microservice-task:latest .
+
+    - name: Push to local reg
+      run: |
+        docker tag localhost:32000/microservice-task:latest localhost:32000/microservice-task:latest
+        docker push localhost:32000/microservice-task:latest
+
+  deploy:
+    runs-on: debian-latest
+    needs: build
+    steps:
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.29.0'
+
+    - name: Configure kubeconfig
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+
+    - name: Deploy
+      run: |
+        kubectl apply -f k8s/microservice-deployment.yaml
+        kubectl apply -f k8s/microservice-service.yaml
+        kubectl apply -f k8s/ingress.yaml
