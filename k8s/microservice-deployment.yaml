@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microservice-task
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: microservice-task
+  template:
+    metadata:
+      labels:
+        app: microservice-task
+    spec:
+      containers:
+      - name: microservice-task
+        image: localhost:32000/microservice-task:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: accesskey
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: secretkey
